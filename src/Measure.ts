@@ -2,6 +2,7 @@ import { MeasureOptions } from "./MeasureOptions";
 import { measureOptionsDefault } from "./measureOptionsDefault";
 import { performanceMock } from "./PerformanceMock";
 import { TimeBucketResult } from "./TimeBucketResult";
+import { globalObj } from "./globalObj";
 
 /**
  * Checking that window.performance has needed properties . Most test environments do not have it
@@ -9,16 +10,17 @@ import { TimeBucketResult } from "./TimeBucketResult";
  */
 const perf: typeof window["performance"] | typeof performanceMock =
   // @ts-ignore
-  window?.performance?.mark &&
+  globalObj?.performance?.mark &&
   // @ts-ignore
-  window?.performance?.measure &&
+  globalObj?.performance?.measure &&
   // @ts-ignore
-  window?.performance?.now &&
+  globalObj?.performance?.now &&
   // @ts-ignore
-  window?.performance?.clearMeasures &&
+  globalObj?.performance?.clearMeasures &&
   // @ts-ignore
-  window?.performance?.clearMarks
-    ? window.performance
+  globalObj?.performance?.clearMarks
+    ? // @ts-ignore
+      globalObj.performance
     : performanceMock;
 
 export class Measure {

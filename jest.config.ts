@@ -34,6 +34,7 @@ export default {
     ".module.ts",
     ".mock.ts",
     "PerformanceMock.ts",
+    "globalObj.ts",
   ],
 
   // Indicates which provider should be used to instrument code for coverage
