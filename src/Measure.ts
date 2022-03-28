@@ -16,10 +16,10 @@ export class Measure {
   private readonly _markStartName: string;
   private readonly _markEndName: string;
   private readonly _timeBucketSize: number;
-  private readonly _maxSamples: number;
+  private readonly _intervalInMilliseconds: number;
+  private _interval: number | null = null;
   private readonly _maxMeasures: number;
   private _isActive: boolean;
-  private _sampleCount = 0;
 
   private readonly _isInactive: boolean;
   get isInactive() {
@@ -31,7 +31,7 @@ export class Measure {
     return this._isFinished;
   }
 
-  private _startTime: DOMHighResTimeStamp;
+  private readonly _startTime: DOMHighResTimeStamp;
 
   private _results: TimeBucketResult[] = [];
   get results(): TimeBucketResult[] {
@@ -43,21 +43,26 @@ export class Measure {
    * @param {MeasureOptions} options
    */
   constructor(options: MeasureOptions) {
-    const { name, timeBucketSize, maxSamples, maxMeasures, isInactive } =
-      options;
+    const { name, timeBucketSize, interval, maxMeasures, isInactive } = options;
     this._name = name;
     this._markStartName = `${name}Start`;
     this._markEndName = `${name}End`;
     this._timeBucketSize =
       timeBucketSize || measureOptionsDefault.timeBucketSize;
-    this._maxSamples = maxSamples || measureOptionsDefault.maxSamples;
+    this._intervalInMilliseconds = interval || measureOptionsDefault.interval;
     this._maxMeasures = maxMeasures || measureOptionsDefault.maxMeasures;
     this._isInactive = isInactive ?? measureOptionsDefault.isInactive;
     this._isActive = !this._isInactive;
     this._startTime = perf.now();
+
+    this.setupInterval();
   }
 
   finish() {
+    this._calcResultsAndReset();
+    if (this._interval) {
+      clearInterval(this._interval);
+    }
     this._isFinished = true;
     this._isActive = false;
   }
@@ -89,11 +94,6 @@ export class Measure {
       perf.measure(this._name, measureOptions);
     } else {
       perf.measure(this._name, this._markStartName, this._markEndName);
-    }
-    this._sampleCount += 1;
-
-    if (this._sampleCount >= this._maxSamples) {
-      this._calcResultsAndReset();
     }
   }
 
@@ -133,7 +133,7 @@ export class Measure {
     bucket.count += 1;
   }
 
-  private _calcBucketAverage(bucket: TimeBucketResult) {
+  private static _calcBucketAverage(bucket: TimeBucketResult) {
     let measuresSum = 0;
     for (const measure of bucket.measures) {
       measuresSum += measure.duration;
@@ -161,7 +161,7 @@ export class Measure {
     // iterate over buckets and calculate
     for (const bucket of this._results) {
       if (bucket.count) {
-        this._calcBucketAverage(bucket);
+        Measure._calcBucketAverage(bucket);
       }
     }
   }
@@ -170,7 +170,6 @@ export class Measure {
     perf.clearMarks(this._markStartName);
     perf.clearMarks(this._markEndName);
     perf.clearMeasures(this._name);
-    this._sampleCount = 0;
   }
 
   private _calcResultsAndReset(): void {
@@ -178,5 +177,14 @@ export class Measure {
     this._calcResultsForTimeBucket();
     // reset measures from performance object
     this._resetMarksAndMeasures();
+  }
+
+  private setupInterval() {
+    if (!this._isActive) {
+      return;
+    }
+    this._interval = (setInterval as typeof window["setInterval"])(() => {
+      this._calcResultsAndReset();
+    }, this._intervalInMilliseconds);
   }
 }

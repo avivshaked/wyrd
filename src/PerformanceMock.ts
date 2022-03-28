@@ -92,7 +92,6 @@ export const performanceMock: PerformanceMock = {
     }
   },
   getEntriesByName: (name: string, type?: string): PerformanceEntryList => {
-    console.log("inside mock");
     if (type === "mark") {
       return [createPerformanceMark({ name })];
     } else {

@@ -2,25 +2,13 @@ import { Measure } from "./Measure";
 import { createPerformanceMeasure, performanceMock } from "./PerformanceMock";
 import Mock = jest.Mock;
 
-beforeEach(() => {
-  jest.spyOn(performanceMock, "mark");
-  jest.spyOn(performanceMock, "measure");
-  jest
-    .spyOn(performanceMock, "getEntriesByName")
-    .mockImplementation(performanceMock.getEntriesByName);
-  jest.spyOn(performanceMock, "clearMarks");
-  jest.spyOn(performanceMock, "clearMeasures");
-  jest.spyOn(performanceMock, "now");
-});
+jest.useFakeTimers();
 
-// afterEach(() => {
-//   (performanceMock.mark as Mock).mockReset();
-//   (performanceMock.measure as Mock).mockReset();
-//   (performanceMock.getEntriesByName as Mock).mockReset();
-//   (performanceMock.clearMarks as Mock).mockReset();
-//   (performanceMock.clearMeasures as Mock).mockReset();
-//   (performanceMock.now as Mock).mockReset();
-// });
+beforeEach(() => {});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
 
 test("Measure instance should be created", () => {
   const m = new Measure({ name: "test-measure" });
@@ -35,6 +23,7 @@ test("finish should set isFinished to true", () => {
 });
 
 test("markStart() should call performance.mark with the name of the measure and a postfix Start", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.markStart();
@@ -52,6 +41,7 @@ test("isInactive prop should ne true if options isInactive is true", () => {
 });
 
 test("markStart() should not call performance.mark if isInactive is true", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test", isInactive: true });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.markStart();
@@ -59,6 +49,7 @@ test("markStart() should not call performance.mark if isInactive is true", () =>
 });
 
 test("markStart() should not call performance.mark if Measure is finished", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.finish();
@@ -66,17 +57,8 @@ test("markStart() should not call performance.mark if Measure is finished", () =
   expect(performanceMock.mark).not.toHaveBeenCalled();
 });
 
-test("markStart() should increase the markCount on the instance", () => {
-  const m = new Measure({ name: "test" });
-  // @ts-ignore
-  const count = m._sampleCount;
-  m.markStart();
-  m.markEnd();
-  // @ts-ignore
-  expect(m._sampleCount).toBe(count + 1);
-});
-
 test("markEnd() should call performance.mark with the name of the measure and a postfix End", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.markEnd();
@@ -84,6 +66,7 @@ test("markEnd() should call performance.mark with the name of the measure and a 
 });
 
 test("markEnd() should call performance.mark with options", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   const someOptions = {};
@@ -92,6 +75,7 @@ test("markEnd() should call performance.mark with options", () => {
 });
 
 test("markEnd() should not call performance.mark if isInactive is true", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test", isInactive: true });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.markEnd();
@@ -99,6 +83,7 @@ test("markEnd() should not call performance.mark if isInactive is true", () => {
 });
 
 test("markEnd() should not call performance.mark if Measure is finished", () => {
+  jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.finish();
@@ -106,26 +91,9 @@ test("markEnd() should not call performance.mark if Measure is finished", () => 
   expect(performanceMock.mark).not.toHaveBeenCalled();
 });
 
-test("markEnd() should call performance.measure with the name of the measure", () => {
-  const m = new Measure({ name: "test" });
-  expect(performanceMock.measure).not.toHaveBeenCalled();
-  m.markEnd();
-  expect(performanceMock.measure).toHaveBeenCalledWith(
-    "test",
-    "testStart",
-    "testEnd"
-  );
-});
-
-test("markEnd() should call performance.measure with the name of the measure and options", () => {
-  const m = new Measure({ name: "test" });
-  expect(performanceMock.measure).not.toHaveBeenCalled();
-  const someOptions = {};
-  m.markEnd(undefined, someOptions);
-  expect(performanceMock.measure).toHaveBeenCalledWith("test", someOptions);
-});
-
 test("4 samples that should be 2 time buckets", () => {
+  jest.spyOn(performanceMock, "getEntriesByName");
+
   (performanceMock.getEntriesByName as Mock).mockReturnValue([
     createPerformanceMeasure({
       duration: 100,
@@ -144,17 +112,8 @@ test("4 samples that should be 2 time buckets", () => {
       startTime: 1500,
     }),
   ]);
-  (performanceMock.now as Mock).mockReturnValue(0);
-  const m = new Measure({ name: "test", timeBucketSize: 1000, maxSamples: 4 });
-
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
+  const m = new Measure({ name: "test", timeBucketSize: 1000 });
+  jest.runOnlyPendingTimers();
 
   expect(m.results[0].count).toBe(2);
   expect(m.results[0].average).toBe(150);
@@ -164,6 +123,7 @@ test("4 samples that should be 2 time buckets", () => {
 });
 
 test("should resume last bucket when not finished", () => {
+  jest.spyOn(performanceMock, "getEntriesByName");
   (performanceMock.getEntriesByName as Mock).mockReturnValue([
     createPerformanceMeasure({
       duration: 100,
@@ -178,15 +138,9 @@ test("should resume last bucket when not finished", () => {
       startTime: 1100,
     }),
   ]);
-  (performanceMock.now as Mock).mockReturnValue(0);
-  const m = new Measure({ name: "test", timeBucketSize: 1000, maxSamples: 3 });
+  const m = new Measure({ name: "test", timeBucketSize: 1000 });
 
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
+  jest.runOnlyPendingTimers();
 
   expect(m.results[0].count).toBe(2);
   expect(m.results[0].average).toBe(150);
@@ -209,12 +163,7 @@ test("should resume last bucket when not finished", () => {
     }),
   ]);
 
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
-  m.markStart();
-  m.markEnd();
+  jest.runOnlyPendingTimers();
 
   expect(m.results[1].average).toBe(250);
   expect(m.results[1].count).toBe(2);

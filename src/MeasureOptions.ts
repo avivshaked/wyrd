@@ -11,10 +11,10 @@ export interface MeasureOptions {
    */
   timeBucketSize?: number;
   /**
-   * The maximum amount of samples that will be stored on the native performance object
-   * Default is 1000
+   * How often should a calculation be made, in milliseconds
+   * Default is 2000
    */
-  maxSamples?: number;
+  interval?: number;
   /**
    * The Measure objects saves all latest measurements. It keeps a limited number of them.
    * This defines the limit.

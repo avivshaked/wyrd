@@ -3,7 +3,7 @@ import { OptionsDefault } from "./OptionsDefault";
 
 export const measureOptionsDefault: OptionsDefault<MeasureOptions, "name"> = {
   timeBucketSize: 1000,
-  maxSamples: 1000,
+  interval: 2000,
   maxMeasures: 100,
   isInactive: false,
 };
