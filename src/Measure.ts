@@ -4,12 +4,22 @@ import { performanceMock } from "./PerformanceMock";
 import { TimeBucketResult } from "./TimeBucketResult";
 
 /**
- * Checking that window.performance has mark. Some test environment do not have it
+ * Checking that window.performance has needed properties . Most test environments do not have it
  * In that case, a mock will be used instead of the actual performance object.
  */
 const perf: typeof window["performance"] | typeof performanceMock =
   // @ts-ignore
-  window?.performance?.mark ? window.performance : performanceMock;
+  window?.performance?.mark &&
+  // @ts-ignore
+  window?.performance?.measure &&
+  // @ts-ignore
+  window?.performance?.now &&
+  // @ts-ignore
+  window?.performance?.clearMeasures &&
+  // @ts-ignore
+  window?.performance?.clearMarks
+    ? window.performance
+    : performanceMock;
 
 export class Measure {
   private readonly _name: string;
@@ -35,6 +45,9 @@ export class Measure {
 
   private _results: TimeBucketResult[] = [];
   get results(): TimeBucketResult[] {
+    // calculate all existing results
+    this._calcResultsAndReset();
+    // return latest results
     return this._results.slice();
   }
 
@@ -55,7 +68,7 @@ export class Measure {
     this._isActive = !this._isInactive;
     this._startTime = perf.now();
 
-    this.setupInterval();
+    this._setupInterval();
   }
 
   finish() {
@@ -188,7 +201,7 @@ export class Measure {
     }
   }
 
-  private setupInterval() {
+  private _setupInterval() {
     if (!this._isActive) {
       return;
     }

@@ -25,6 +25,40 @@ test("finish should set isFinished to true", () => {
   expect(m.isFinished).toBe(true);
 });
 
+test("getMeasures should return performance.getEntitiesByName", () => {
+  const mockGetEntities = jest
+    .spyOn(performanceMock, "getEntriesByName")
+    .mockReturnValue([]);
+  const m = new Measure({ name: "test" });
+  expect(mockGetEntities).not.toHaveBeenCalled();
+  m.getMeasures();
+  expect(mockGetEntities).toHaveBeenCalledWith("test");
+});
+
+test("getMeasures should not call getEntitiesByName if inactive", () => {
+  const mockGetEntities = jest
+    .spyOn(performanceMock, "getEntriesByName")
+    .mockReturnValue([]);
+  const m = new Measure({ name: "test", isInactive: true });
+  expect(mockGetEntities).not.toHaveBeenCalled();
+  m.getMeasures();
+  expect(mockGetEntities).not.toHaveBeenCalled();
+});
+
+test("getMeasures should not call getEntitiesByName if measure is finished", () => {
+  const mockGetEntities = jest
+    .spyOn(performanceMock, "getEntriesByName")
+    .mockReturnValue([]);
+  const m = new Measure({ name: "test" });
+  expect(mockGetEntities).not.toHaveBeenCalled();
+  m.finish();
+  // finish actually calls it to finish up all remaining samples
+  // we need to reset here before the test
+  mockGetEntities.mockReset();
+  m.getMeasures();
+  expect(mockGetEntities).not.toHaveBeenCalled();
+});
+
 test("markStart() should call performance.mark with the name of the measure and a postfix Start", () => {
   jest.spyOn(performanceMock, "mark");
   const m = new Measure({ name: "test" });
@@ -53,6 +87,7 @@ test("markStart() should not call performance.mark if isInactive is true", () =>
 
 test("markStart() should not call performance.mark if Measure is finished", () => {
   jest.spyOn(performanceMock, "mark");
+  jest.spyOn(performanceMock, "getEntriesByName").mockReturnValue([]);
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.finish();
@@ -87,6 +122,7 @@ test("markEnd() should not call performance.mark if isInactive is true", () => {
 
 test("markEnd() should not call performance.mark if Measure is finished", () => {
   jest.spyOn(performanceMock, "mark");
+  jest.spyOn(performanceMock, "getEntriesByName").mockReturnValue([]);
   const m = new Measure({ name: "test" });
   expect(performanceMock.mark).not.toHaveBeenCalled();
   m.finish();
@@ -115,10 +151,25 @@ test("markEnd() should call performance.measure with options f they are provided
   expect(performanceMock.measure).toHaveBeenCalledWith("test", someOptions);
 });
 
+test("when interval is fired, clearMarks and clearMeasures are fired", () => {
+  const mockClearMarks = jest.spyOn(performanceMock, "clearMarks");
+  const mockClearMeasures = jest.spyOn(performanceMock, "clearMeasures");
+  jest.spyOn(performanceMock, "getEntriesByName").mockReturnValue([]);
+  const m = new Measure({ name: "test" });
+  expect(mockClearMarks).not.toHaveBeenCalled();
+  expect(mockClearMeasures).not.toHaveBeenCalled();
+  jest.runOnlyPendingTimers();
+  expect(mockClearMarks).toHaveBeenCalledTimes(2);
+  expect(mockClearMarks).toHaveBeenNthCalledWith(1, "testStart");
+  expect(mockClearMarks).toHaveBeenNthCalledWith(2, "testEnd");
+  expect(mockClearMeasures).toHaveBeenCalledTimes(1);
+  expect(mockClearMeasures).toHaveBeenCalledWith("test");
+});
+
 test("4 samples that should be 2 time buckets", () => {
   jest.spyOn(performanceMock, "getEntriesByName");
 
-  (performanceMock.getEntriesByName as Mock).mockReturnValue([
+  (performanceMock.getEntriesByName as Mock).mockReturnValueOnce([
     createPerformanceMeasure({
       duration: 100,
       startTime: 100,
@@ -138,7 +189,9 @@ test("4 samples that should be 2 time buckets", () => {
   ]);
   const m = new Measure({ name: "test", timeBucketSize: 1000 });
   jest.runOnlyPendingTimers();
-
+  // because instance.results is calling _calcResultsAndReset, we have to make sure that
+  // getMeasures returns an empty list. The asumption is that the measures have been deleted
+  (performanceMock.getEntriesByName as Mock).mockReturnValue([]);
   expect(m.results[0].count).toBe(2);
   expect(m.results[0].average).toBe(150);
   expect(m.results[1].count).toBe(2);
@@ -148,7 +201,7 @@ test("4 samples that should be 2 time buckets", () => {
 
 test("should resume last bucket when not finished", () => {
   jest.spyOn(performanceMock, "getEntriesByName");
-  (performanceMock.getEntriesByName as Mock).mockReturnValue([
+  (performanceMock.getEntriesByName as Mock).mockReturnValueOnce([
     createPerformanceMeasure({
       duration: 100,
       startTime: 100,
@@ -165,6 +218,7 @@ test("should resume last bucket when not finished", () => {
   const m = new Measure({ name: "test", timeBucketSize: 1000 });
 
   jest.runOnlyPendingTimers();
+  (performanceMock.getEntriesByName as Mock).mockReturnValue([]);
 
   expect(m.results[0].count).toBe(2);
   expect(m.results[0].average).toBe(150);
@@ -188,6 +242,7 @@ test("should resume last bucket when not finished", () => {
   ]);
 
   jest.runOnlyPendingTimers();
+  (performanceMock.getEntriesByName as Mock).mockReturnValue([]);
 
   expect(m.results[1].average).toBe(250);
   expect(m.results[1].count).toBe(2);
@@ -231,6 +286,7 @@ test("when there are too many buckets, only the latest should be in results", ()
     }),
   ]);
   jest.runOnlyPendingTimers();
+  (performanceMock.getEntriesByName as Mock).mockReturnValue([]);
   expect(m.results.length).toBe(2);
   // @ts-ignore
   expect(m._startTime).toBe(1100);
