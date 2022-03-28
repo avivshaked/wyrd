@@ -25,27 +25,27 @@ test("finish should set isFinished to true", () => {
   expect(m.isFinished).toBe(true);
 });
 
-test("getMeasures should return performance.getEntitiesByName", () => {
+test("getSamples should return performance.getEntitiesByName", () => {
   const mockGetEntities = jest
     .spyOn(performanceMock, "getEntriesByName")
     .mockReturnValue([]);
   const m = new Measure({ name: "test" });
   expect(mockGetEntities).not.toHaveBeenCalled();
-  m.getMeasures();
+  m.getSamples();
   expect(mockGetEntities).toHaveBeenCalledWith("test");
 });
 
-test("getMeasures should not call getEntitiesByName if inactive", () => {
+test("getSamples should not call getEntitiesByName if inactive", () => {
   const mockGetEntities = jest
     .spyOn(performanceMock, "getEntriesByName")
     .mockReturnValue([]);
   const m = new Measure({ name: "test", isInactive: true });
   expect(mockGetEntities).not.toHaveBeenCalled();
-  m.getMeasures();
+  m.getSamples();
   expect(mockGetEntities).not.toHaveBeenCalled();
 });
 
-test("getMeasures should not call getEntitiesByName if measure is finished", () => {
+test("getSamples should not call getEntitiesByName if measure is finished", () => {
   const mockGetEntities = jest
     .spyOn(performanceMock, "getEntriesByName")
     .mockReturnValue([]);
@@ -55,7 +55,7 @@ test("getMeasures should not call getEntitiesByName if measure is finished", () 
   // finish actually calls it to finish up all remaining samples
   // we need to reset here before the test
   mockGetEntities.mockReset();
-  m.getMeasures();
+  m.getSamples();
   expect(mockGetEntities).not.toHaveBeenCalled();
 });
 
@@ -190,7 +190,7 @@ test("4 samples that should be 2 time buckets", () => {
   const m = new Measure({ name: "test", timeBucketSize: 1000 });
   jest.runOnlyPendingTimers();
   // because instance.results is calling _calcResultsAndReset, we have to make sure that
-  // getMeasures returns an empty list. The asumption is that the measures have been deleted
+  // getSamples returns an empty list. The asumption is that the measures have been deleted
   (performanceMock.getEntriesByName as Mock).mockReturnValue([]);
   expect(m.results[0].count).toBe(2);
   expect(m.results[0].average).toBe(150);

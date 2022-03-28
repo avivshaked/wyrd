@@ -25,6 +25,9 @@ const perf: typeof window["performance"] | typeof performanceMock =
 
 export class Measure {
   private readonly _name: string;
+  public get name(): string {
+    return this._name;
+  }
   private readonly _markStartName: string;
   private readonly _markEndName: string;
   private readonly _timeBucketSize: number;
@@ -73,6 +76,9 @@ export class Measure {
     this._setupInterval();
   }
 
+  /**
+   * Makes the Measure inactive. No future samples will be collected.
+   */
   finish() {
     this._calcResultsAndReset();
     if (this._interval) {
@@ -115,7 +121,7 @@ export class Measure {
   /**
    * returns a PerformanceMeasure list of the measurements specific to the container
    */
-  public getMeasures(): PerformanceMeasure[] {
+  public getSamples(): PerformanceMeasure[] {
     if (!this._isActive) {
       return [];
     }
@@ -165,7 +171,7 @@ export class Measure {
       return;
     }
 
-    const measures = this.getMeasures();
+    const measures = this.getSamples();
     const times = measures.map((measure) => measure.startTime);
     const endTime = Math.max(...times);
     this._prepareResultBuckets(endTime);
