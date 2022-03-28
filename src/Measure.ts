@@ -18,7 +18,7 @@ export class Measure {
   private readonly _timeBucketSize: number;
   private readonly _intervalInMilliseconds: number;
   private _interval: number | null = null;
-  private readonly _maxMeasures: number;
+  private readonly _maxBuckets: number;
   private _isActive: boolean;
 
   private readonly _isInactive: boolean;
@@ -31,7 +31,7 @@ export class Measure {
     return this._isFinished;
   }
 
-  private readonly _startTime: DOMHighResTimeStamp;
+  private _startTime: DOMHighResTimeStamp;
 
   private _results: TimeBucketResult[] = [];
   get results(): TimeBucketResult[] {
@@ -43,14 +43,14 @@ export class Measure {
    * @param {MeasureOptions} options
    */
   constructor(options: MeasureOptions) {
-    const { name, timeBucketSize, interval, maxMeasures, isInactive } = options;
+    const { name, timeBucketSize, interval, maxBuckets, isInactive } = options;
     this._name = name;
     this._markStartName = `${name}Start`;
     this._markEndName = `${name}End`;
     this._timeBucketSize =
       timeBucketSize || measureOptionsDefault.timeBucketSize;
     this._intervalInMilliseconds = interval || measureOptionsDefault.interval;
-    this._maxMeasures = maxMeasures || measureOptionsDefault.maxMeasures;
+    this._maxBuckets = maxBuckets || measureOptionsDefault.maxBuckets;
     this._isInactive = isInactive ?? measureOptionsDefault.isInactive;
     this._isActive = !this._isInactive;
     this._startTime = perf.now();
@@ -172,11 +172,20 @@ export class Measure {
     perf.clearMeasures(this._name);
   }
 
+  private _sliceResultsArray() {
+    this._results = this._results.slice(-this._maxBuckets);
+    this._startTime = this._results[0].startTime;
+  }
+
   private _calcResultsAndReset(): void {
     // calculate averages and counts
     this._calcResultsForTimeBucket();
     // reset measures from performance object
     this._resetMarksAndMeasures();
+    // check how many bucket results there are and keep only the latest
+    if (this._results.length > this._maxBuckets) {
+      this._sliceResultsArray();
+    }
   }
 
   private setupInterval() {

@@ -15,12 +15,12 @@ export interface MeasureOptions {
    * Default is 2000
    */
   interval?: number;
+
   /**
-   * The Measure objects saves all latest measurements. It keeps a limited number of them.
-   * This defines the limit.
-   * Default is 100
+   * Limit the number of buckets the Measure instance keeps
+   * default is 100
    */
-  maxMeasures?: number;
+  maxBuckets?: number;
   /**
    * There might be cases where it is desired that the Measure does nothing. For example it might not be desirable for
    * the measures to run on production. When this option is set to true, the Measure becomes inert, and all methods

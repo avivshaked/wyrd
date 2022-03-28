@@ -4,10 +4,13 @@ import Mock = jest.Mock;
 
 jest.useFakeTimers();
 
-beforeEach(() => {});
+beforeEach(() => {
+  jest.clearAllTimers();
+});
 
 afterAll(() => {
   jest.restoreAllMocks();
+  jest.clearAllTimers();
 });
 
 test("Measure instance should be created", () => {
@@ -91,6 +94,27 @@ test("markEnd() should not call performance.mark if Measure is finished", () => 
   expect(performanceMock.mark).not.toHaveBeenCalled();
 });
 
+test("markEnd() should call performance.measure with the name of the measure and both start-end markers", () => {
+  jest.spyOn(performanceMock, "measure");
+  const m = new Measure({ name: "test" });
+  expect(performanceMock.measure).not.toHaveBeenCalled();
+  m.markEnd();
+  expect(performanceMock.measure).toHaveBeenCalledWith(
+    "test",
+    "testStart",
+    "testEnd"
+  );
+});
+
+test("markEnd() should call performance.measure with options f they are provided", () => {
+  jest.spyOn(performanceMock, "measure");
+  const m = new Measure({ name: "test" });
+  expect(performanceMock.measure).not.toHaveBeenCalled();
+  const someOptions = {};
+  m.markEnd(undefined, someOptions);
+  expect(performanceMock.measure).toHaveBeenCalledWith("test", someOptions);
+});
+
 test("4 samples that should be 2 time buckets", () => {
   jest.spyOn(performanceMock, "getEntriesByName");
 
@@ -170,4 +194,44 @@ test("should resume last bucket when not finished", () => {
   expect(m.results[2].count).toBe(2);
   expect(m.results[2].average).toBe(205);
   expect(m.results.length).toBe(3);
+});
+
+test("when there are too many buckets, only the latest should be in results", () => {
+  jest.spyOn(performanceMock, "getEntriesByName");
+  jest.spyOn(performanceMock, "now").mockReturnValue(100);
+  (performanceMock.getEntriesByName as Mock).mockReturnValue([
+    createPerformanceMeasure({
+      duration: 100,
+      startTime: 400,
+    }),
+    createPerformanceMeasure({
+      duration: 200,
+      startTime: 500,
+    }),
+    createPerformanceMeasure({
+      duration: 200,
+      startTime: 1100,
+    }),
+  ]);
+  const m = new Measure({ name: "test", maxBuckets: 2 });
+  jest.runOnlyPendingTimers();
+  expect(m.results.length).toBe(2);
+  (performanceMock.getEntriesByName as Mock).mockReturnValueOnce([
+    createPerformanceMeasure({
+      duration: 100,
+      startTime: 1100,
+    }),
+    createPerformanceMeasure({
+      duration: 200,
+      startTime: 2500,
+    }),
+    createPerformanceMeasure({
+      duration: 200,
+      startTime: 2700,
+    }),
+  ]);
+  jest.runOnlyPendingTimers();
+  expect(m.results.length).toBe(2);
+  // @ts-ignore
+  expect(m._startTime).toBe(1100);
 });
