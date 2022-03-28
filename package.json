@@ -12,7 +12,8 @@
     "build": "NODE_ENV=production rollup -c",
     "dev": "NODE_ENV=development rollup -c -w",
     "deploy": "yarn cleanup && yarn dts && yarn build",
-    "test": "jest"
+    "test": "jest",
+    "publish": "./publish.sh"
   },
   "files": [
     "dist"
