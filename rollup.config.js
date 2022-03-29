@@ -1,31 +1,8 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
-import { terser } from "rollup-plugin-terser";
 import pkg from "./package.json";
-
-console.log(process.env.NODE_ENV);
-
-const devMode = process.env.NODE_ENV === "development";
-
-const sharedPlugins = devMode
-  ? [typescript()]
-  : [
-      typescript(),
-      terser({
-        ecma: 2020,
-        mangle: { toplevel: true },
-        compress: {
-          module: true,
-          toplevel: true,
-          unsafe_arrows: true,
-          drop_console: !devMode,
-          drop_debugger: !devMode,
-        },
-        output: { quote_style: 1 },
-      }),
-    ];
-
+import { terser } from "rollup-plugin-terser";
 export default [
   // browser-friendly UMD build
   {
@@ -36,9 +13,18 @@ export default [
       format: "umd",
     },
     plugins: [
-      ...sharedPlugins,
+      typescript(),
       resolve(), // so Rollup can find `ms`
       commonjs(), // so Rollup can convert `ms` to an ES module
+      process.env.NODE_ENV === "production" &&
+        terser({
+          mangle: {
+            keep_classnames: true,
+            keep_fnames: true,
+          },
+          keep_classnames: true,
+          keep_fnames: true,
+        }),
     ],
   },
 
@@ -55,6 +41,17 @@ export default [
       { file: pkg.main, format: "cjs" },
       { file: pkg.module, format: "es" },
     ],
-    plugins: [...sharedPlugins],
+    plugins: [
+      typescript(),
+      process.env.NODE_ENV === "production" &&
+        terser({
+          mangle: {
+            keep_classnames: true,
+            keep_fnames: true,
+          },
+          keep_classnames: true,
+          keep_fnames: true,
+        }),
+    ],
   },
 ];
