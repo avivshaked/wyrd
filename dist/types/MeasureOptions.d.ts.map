@@ -1,0 +1,1 @@
+{"version":3,"file":"MeasureOptions.d.ts","sourceRoot":"","sources":["../../src/MeasureOptions.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,cAAc;IAC7B;;OAEG;IACH,IAAI,EAAE,MAAM,CAAC;IACb;;;;;OAKG;IACH,cAAc,CAAC,EAAE,MAAM,CAAC;IACxB;;;OAGG;IACH,QAAQ,CAAC,EAAE,MAAM,CAAC;IAElB;;;OAGG;IACH,UAAU,CAAC,EAAE,MAAM,CAAC;IACpB;;;;;OAKG;IACH,UAAU,CAAC,EAAE,OAAO,CAAC;CACtB"}
