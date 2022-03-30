@@ -46,6 +46,10 @@ export class MeasureManager {
     }
   }
 
+  /**
+   * The default is to place the manager object on the global object for easy access from the console.
+   * If this is not desired, the manager can be removed from the global using this method.
+   */
   public removeFromGlobal() {
     delete (globalObj as { [key: string]: any })[this._globalName];
     this._shouldBeOnGlobal = false;
@@ -57,6 +61,10 @@ export class MeasureManager {
     );
   }
 
+  /**
+   * Returns a specific Measure
+   * @param {string} name
+   */
   public getMeasure(name: string): Measure | null {
     return this._measures.get(name) || null;
   }
@@ -199,10 +207,16 @@ export class MeasureManager {
     }
   }
 
+  /**
+   * Returns the map of all measures taken by this manager
+   */
   public getMeasuresMap(): Map<string, Measure> {
     return this._measures;
   }
 
+  /**
+   * Returns a list of all measures taken by this manager
+   */
   public getMeasures(): Measure[] {
     return Array.from(this._measures.values());
   }

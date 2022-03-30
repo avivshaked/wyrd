@@ -1,11 +1,24 @@
 {
   "name": "wyrd",
   "version": "0.1.2",
-  "description": "",
+  "description": "A tool for measuring performance of specific areas or functions in your application for a specific time bucket.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.umd.js",
   "types": "dist/types/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avivshaked/wyrd.git"
+  },
+  "keywords": [
+    "tool",
+    "measure",
+    "performance"
+  ],
+  "bugs": {
+    "url": "https://github.com/avivshaked/wyrd/issues"
+  },
+  "homepage": "https://github.com/avivshaked/wyrd.git#readme",
   "scripts": {
     "cleanup": "rm -rf ./dist",
     "build": "NODE_ENV=production rollup -c",
@@ -18,8 +31,8 @@
   "files": [
     "dist"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Aviv Shaked",
+  "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
