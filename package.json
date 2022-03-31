@@ -1,6 +1,6 @@
 {
   "name": "wyrd",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A tool for measuring performance of specific areas or functions in your application for a specific time bucket.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
